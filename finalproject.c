@@ -96,7 +96,85 @@ void loadAccounts(accInfo bank_accounts[], int *n)
     fclose(file);
     printf("Successfully loaded %d accounts.\n", *n);
 }
+int dailyLimit(double withdrawnToday, double amount)
+{
+    // Check if adding this amount exceeds daily limit 
+    if (withdrawnToday + amount > 50000)
+        return 0; // exceeded
 
+    return 1; // allowed
+}
+
+void WITHDRAW(accInfo *acc, double *withdrawnToday)
+{
+    double amount;
+    char input[100]; //store account number entered by user
+    printf("\n Withdrawal Process \n");
+    printf("Enter active account number: ");
+    scanf("%s", input);
+    // Verify account number and see if it matches
+    if (strcmp(acc->accnumber, input) != 0)
+    {
+        printf("Error Account number does not match\n");
+        return;
+    }
+
+    // Check account status 
+    if (strcmp(acc->status, "active") != 0)
+    {
+        printf("Warning Account is inactive. Process cannot be completed\n");
+        return;
+    }
+
+    // Get withdrawal amount 
+    printf("Enter withdrawal amount: ");
+    if (scanf("%lf", &amount) != 1) //to make sure it is valid input
+    {
+        printf("Error: Invalid amount entered.\n");
+        while (getchar() != '\n'); // Clear input buffer
+        return;
+    }
+
+    //check amount of money enterd
+    if (amount <= 0)
+    {
+        printf("Error: Withdrawal amount must be positive\n");
+        return;
+    }
+
+    //  limit 
+    if (amount > 10000)
+    {
+        printf("Error: Maximum withdrawal per transaction is 10,000$\n");
+        return;
+    }
+
+    //Daily limit check 
+    if (!dailyLimit(*withdrawnToday, amount)) 
+    {
+        printf("Error: Daily withdrawal limit exceeded (50,000$)\n");
+        return;
+    }
+
+    //check if the user has enough money for withdrawal
+    if (amount > acc->balance)
+    {
+        printf("Error: Insufficient balance.\n");
+        printf("Current balance: %.2f$\n", acc->balance);
+        printf("Requested amount: %.2f$\n", amount);
+        return;
+    }
+
+    //Process the withdrawal 
+    acc->balance -= amount;
+    *withdrawnToday += amount;
+
+    printf("TRANSACTION SUCCESSFUL!\n");
+    printf("Account: %s\n", acc->accnumber);
+    printf("Withdrawn: %.2f$\n", amount);
+    printf("New Balance: %.2f$\n", acc->balance);
+    printf("Total withdrawn today: %.2f$\n", *withdrawnToday);
+}
 int main()
 {
    
