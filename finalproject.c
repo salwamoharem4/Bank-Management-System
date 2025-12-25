@@ -197,8 +197,11 @@ void recordTransaction(char *accnumber, char *type, double amount, double new_ba
     char filename[50];
     sprintf(filename, "%s.txt", accnumber);//create file per account
     FILE *file = fopen(filename, "a");
-
-    if (file != NULL)
+    if (file == NULL)
+    {
+        return 0; // Failed to open file
+    }
+    else if (file != NULL)
     {
         
         Date current_date = getCurrentDate();
@@ -538,6 +541,117 @@ void WITHDRAW(accInfo *acc, double *withdrawnToday)
     printf("Withdrawn: %.2f$\n", amount);
     printf("New Balance: %.2f$\n", acc->balance);
     printf("Total withdrawn today: %.2f$\n", *withdrawnToday);
+}
+void deposit(accInfo acc[], int n)
+{
+    char acc_num[20];
+    double deposit;
+    printf("enter your account number:");
+    scanf("%s", acc_num);
+    printf("Enter the amount you want to deposit:");
+    scanf("%lf", &deposit);
+    if (deposit > 10000)
+    {
+        printf("Deposit failed: Maximum deposit limit per transaction is 10,000$");
+        return;
+    }
+
+    int i, found = 0, index;
+    for (i = 0; i < n; i++)
+    {
+        if (strcmp(acc[i].accnumber, acc_num) == 0)
+        {
+            found = 1;
+            index = i;
+            break; 
+        }
+    }
+
+    if (found)
+    {
+        if (strcmp(acc[index].status, "active") != 0)
+        {
+            printf("Warning: This account is inactive. The process cannot be completed");
+            return;
+        }
+        acc[index].balance += deposit;
+        printf("Deposit completed successfully");
+
+        // to record the transaction
+        recordTransaction(acc[index].accnumber, "deposit", deposit, acc[index].balance);
+    }
+    else
+    {
+        printf("Error: Account not found");
+    }
+}
+void transfer(accInfo acc[], int n)
+{
+    char sender_acc[20], receiver_acc[20];
+    double amount;
+    int sender_index = -1, receiver_index = -1; //not found at first
+    printf("Enter sender account number: ");
+    scanf("%s", sender_acc);
+    printf("Enter receiver account number: ");
+    scanf("%s", receiver_acc);
+    printf("Enter transfer amount: ");
+    scanf("%lf", &amount);
+
+    // Check if sender and receiver are different
+    if (strcmp(sender_acc, receiver_acc) == 0)
+    {
+        printf("Error: Cannot transfer to the same account.\n");
+        return;
+    }
+
+    // Find both accounts
+    for (int i = 0; i < n; i++)
+    {
+        if (strcmp(acc[i].accnumber, sender_acc) == 0)
+            sender_index = i; 
+        if (strcmp(acc[i].accnumber, receiver_acc) == 0)
+            receiver_index = i;
+    }
+    // Validate sender
+    if (sender_index == -1)
+    {
+        printf("Error: Sender account not found.\n");
+        return;
+    }
+    if (strcmp(acc[sender_index].status, "active") != 0)
+    {
+        printf("Error: Sender account is inactive.\n");
+        return;
+    }
+    // Validate receiver
+    if (receiver_index == -1)
+    {
+        printf("Error: Receiver account not found.\n");
+        return;
+    }
+    if (strcmp(acc[receiver_index].status, "active") != 0)
+    {
+        printf("Error: Receiver account is inactive.\n");
+        return;
+    }
+    // Validate amount
+    if (amount <= 0)
+    {
+        printf("Error: Amount must be positive.\n");
+        return;
+    }
+    if (acc[sender_index].balance < amount)
+    {
+        printf("Error: Insufficient balance.\n");
+        return;
+    }
+    acc[sender_index].balance -= amount;
+    acc[receiver_index].balance += amount;
+
+    recordTransaction(sender_acc, "transfer-out", amount, acc[sender_index].balance);
+    recordTransaction(receiver_acc, "transfer-in", amount, acc[receiver_index].balance);
+
+    printf("Transfer successful. New balance: $%.2f\n", acc[sender_index].balance);
 }
 void Report(char accnumber[]) 
 {
