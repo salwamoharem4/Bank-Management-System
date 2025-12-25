@@ -2,21 +2,35 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h> // ADDED for getCurrentDate()
+
 typedef struct
 {
     int month;
     int year;
 } Date;
+
 typedef struct
 {
     char accnumber[20];
     char name[100];
-    char address[100]; 
+    char address[100];
     double balance;
     char mobile[15];
     Date dateopen;
     char status[50];
 } accInfo;
+
+Date getCurrentDate()
+{
+    Date current;
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+    current.year = tm.tm_year + 1900;
+    current.month = tm.tm_mon + 1;
+    return current;
+}
+
 char *monthname(int month)
 {
     switch (month)
@@ -49,6 +63,7 @@ char *monthname(int month)
         return "unknown";
     }
 }
+
 int LOGIN()
 {
     char u[50], p[50], username[50], pass[50], *token, buffer[100];
@@ -66,11 +81,11 @@ int LOGIN()
     {
         token = strtok(buffer, " \t\n");
         if (token != NULL)
-            strcpy(u, token); //username
+            strcpy(u, token); // username
 
         token = strtok(NULL, " \t\n");
         if (token != NULL)
-            strcpy(p, token);//pasword
+            strcpy(p, token); // password
         // replace \n by \0
         p[strcspn(p, "\n")] = '\0';
         if (strcmp(u, username) == 0 && strcmp(p, pass) == 0)
@@ -84,6 +99,7 @@ int LOGIN()
     printf("Invalid username or password!\n");
     return 0;
 }
+
 void loadAccounts(accInfo bank_accounts[], int *n)
 {
     FILE *file = fopen("accounts.txt", "r");
@@ -94,7 +110,7 @@ void loadAccounts(accInfo bank_accounts[], int *n)
     }
     char line[256];
     *n = 0;
-    // Read and parse accounts 
+    // Read and parse accounts
     int i = 0;
     while (fgets(line, sizeof(line), file) != NULL)
     {
@@ -124,10 +140,11 @@ void loadAccounts(accInfo bank_accounts[], int *n)
             printf("Warning: Skipping malformed line: %s\n", line);
         }
     }
-    *n = i; 
+    *n = i;
     fclose(file);
     printf("Successfully loaded %d accounts.\n", *n);
 }
+
 void search(accInfo acc[], int n)
 {
     char search_number[20];
@@ -145,15 +162,15 @@ void search(accInfo acc[], int n)
 
             printf("Account Number : %s\n", acc[i].accnumber);
             printf("Name: %s\n", acc[i].name);
-            printf("E-mail : %s\n", acc[i].address);
-            printf("Balance: %.2lf $\n", acc[i].balance); 
+            printf("Address : %s\n", acc[i].address); 
+            printf("Balance: %.2lf $\n", acc[i].balance);
 
             printf("Mobile: %s\n", acc[i].mobile);
-            printf("Date Opened: %s %d\n",monthname(acc[i].dateopen.month),acc[i].dateopen.year);
+            printf("Date Opened: %s %d\n", monthname(acc[i].dateopen.month), acc[i].dateopen.year);
 
             if (strcmp(acc[i].status, "active") == 0)
                 printf("Status: Active\n");
-            else 
+            else
                 printf("Status: Inactive\n");
 
             break;
@@ -162,6 +179,7 @@ void search(accInfo acc[], int n)
     if (!found)
         printf("Couldn't find this account number\n");
 }
+
 void advanced_search(accInfo acc[], int n)
 {
     char keyword[100];
@@ -175,15 +193,15 @@ void advanced_search(accInfo acc[], int n)
         {
             printf("Account Number : %s\n", acc[i].accnumber);
             printf("Name: %s\n", acc[i].name);
-            printf("E-mail : %s\n", acc[i].address);
+            printf("Address : %s\n", acc[i].address); 
             printf("Balance: %lf $\n", acc[i].balance);
             printf("Mobile: %s\n", acc[i].mobile);
             printf("Date Opened:%s %d\n", monthname(acc[i].dateopen.month), acc[i].dateopen.year);
 
             if (strcmp(acc[i].status, "active") == 0)
-                printf("Status: active\n"); 
+                printf("Status: active\n");
             else if (strcmp(acc[i].status, "inactive") == 0)
-                printf("Status: Inactive\n"); 
+                printf("Status: Inactive\n");
 
             found = 1;
         }
@@ -191,31 +209,27 @@ void advanced_search(accInfo acc[], int n)
     if (!found)
         printf("Couldn't find this account name");
 }
-// it will be used by ALL transaction functions
+
 void recordTransaction(char *accnumber, char *type, double amount, double new_balance)
 {
     char filename[50];
-    sprintf(filename, "%s.txt", accnumber);//create file per account
+    sprintf(filename, "%s.txt", accnumber); // create file per account
     FILE *file = fopen(filename, "a");
-    if (file == NULL)
+    if (file != NULL)
     {
-        return 0; // Failed to open file
-    }
-    else if (file != NULL)
-    {
-        
         Date current_date = getCurrentDate();
 
         fprintf(file, "%04d-%02d %s %.2f Balance: %.2f\n",
                 current_date.year,
                 current_date.month,
-                type,   //withdraw,deposit
-                amount, 
+                type, // withdraw,deposit,transfer-out,transfer-in
+                amount,
                 new_balance);
 
         fclose(file);
     }
 }
+
 int isDuplicate(accInfo bank_accounts[], int n, char *account_num)
 {
     int i;
@@ -244,9 +258,9 @@ void Add_Acc(accInfo bank_accounts[], int *n)
     getchar(); // Clear the newline from scanf
     printf("Please enter name: ");
     fgets(new_account.name, sizeof(new_account.name), stdin);
-    new_account.name[strcspn(new_account.name, "\n")] = '\0'; //law la2t new line bt replace by \0
+    new_account.name[strcspn(new_account.name, "\n")] = '\0';
 
-    printf("Please enter email address: ");
+    printf("Please enter address: "); 
     fgets(new_account.address, sizeof(new_account.address), stdin);
     new_account.address[strcspn(new_account.address, "\n")] = '\0';
 
@@ -265,26 +279,19 @@ void Add_Acc(accInfo bank_accounts[], int *n)
     FILE *file = fopen("accounts.txt", "a");
     if (file != NULL)
     {
-        fprintf(file, "%s,%s,%s,%.2lf,%s,%d,%d,%s\n",
-                new_account.accnumber,
-                new_account.name,
-                new_account.address,
-                new_account.balance,
-                new_account.mobile,
-                new_account.dateopen.month, 
-                new_account.dateopen.year,  
-                new_account.status);
+        fprintf(file, "%s,%s,%s,%.2lf,%s,%d-%d,%s\n", new_account.accnumber, new_account.name,new_account.address,new_account.balance,new_account.mobile,new_account.dateopen.month,new_account.dateopen.year,new_account.status);
         fclose(file);
         printf("Account added successfully!\n");
     }
     else
     {
-        printf("Error opening accounts.txt\n"); 
+        printf("Error opening accounts.txt\n");
     }
 }
+
 void Delete_Acc(accInfo bank_accounts[], int *n)
 {
-    char account_num[20]; 
+    char account_num[20];
     printf("Please enter the account number to delete: ");
     scanf("%s", account_num);
 
@@ -292,7 +299,7 @@ void Delete_Acc(accInfo bank_accounts[], int *n)
 
     for (int i = 0; i < *n; i++)
     {
-        if (strcmp(bank_accounts[i].accnumber, account_num) == 0) 
+        if (strcmp(bank_accounts[i].accnumber, account_num) == 0)
         {
             found = 1; // Account found
 
@@ -310,7 +317,7 @@ void Delete_Acc(accInfo bank_accounts[], int *n)
                 bank_accounts[j] = bank_accounts[j + 1];
             }
 
-            (*n)--; 
+            (*n)--;
 
             // Update the file
             FILE *file = fopen("accounts.txt", "w");
@@ -318,14 +325,14 @@ void Delete_Acc(accInfo bank_accounts[], int *n)
             {
                 for (int k = 0; k < *n; k++)
                 {
-                    fprintf(file, "%s,%s,%s,%.2lf,%s,%d,%d,%s\n",
+                    fprintf(file, "%s,%s,%s,%.2lf,%s,%d-%d,%s\n",
                             bank_accounts[k].accnumber,
                             bank_accounts[k].name,
                             bank_accounts[k].address,
                             bank_accounts[k].balance,
                             bank_accounts[k].mobile,
-                            bank_accounts[k].dateopen.month, 
-                            bank_accounts[k].dateopen.year,  
+                            bank_accounts[k].dateopen.month,
+                            bank_accounts[k].dateopen.year,
                             bank_accounts[k].status);
                 }
                 fclose(file);
@@ -344,6 +351,7 @@ void Delete_Acc(accInfo bank_accounts[], int *n)
         printf("Account not found: %s\n", account_num);
     }
 }
+
 void Modify_Acc(accInfo bank_accounts[], int *n)
 {
     char accnum[20];
@@ -351,7 +359,7 @@ void Modify_Acc(accInfo bank_accounts[], int *n)
 
     printf("Enter account number: ");
     scanf("%s", accnum);
-    getchar(); 
+    getchar();
 
     for (i = 0; i < *n; i++)
     {
@@ -362,26 +370,28 @@ void Modify_Acc(accInfo bank_accounts[], int *n)
             printf("Enter new name: ");
             fgets(bank_accounts[i].name, sizeof(bank_accounts[i].name), stdin);
             bank_accounts[i].name[strcspn(bank_accounts[i].name, "\n")] = '\0';
-            printf("Current mobile: %s\n", bank_accounts[i].mobile);
 
+            printf("Current mobile: %s\n", bank_accounts[i].mobile);
             printf("Enter new mobile: ");
             fgets(bank_accounts[i].mobile, sizeof(bank_accounts[i].mobile), stdin);
             bank_accounts[i].mobile[strcspn(bank_accounts[i].mobile, "\n")] = '\0';
 
-            printf("Current email: %s\n", bank_accounts[i].email);
-            printf("Enter new email: ");
-            fgets(bank_accounts[i].email, sizeof(bank_accounts[i].email), stdin);
-            bank_accounts[i].email[strcspn(bank_accounts[i].email, "\n")] = '\0';
+            printf("Current address: %s\n", bank_accounts[i].address); // CHANGED from email
+            printf("Enter new address: ");
+            fgets(bank_accounts[i].address, sizeof(bank_accounts[i].address), stdin);
+            bank_accounts[i].address[strcspn(bank_accounts[i].address, "\n")] = '\0';
 
-            printf("Account modified successfully\n");
-            return;
+            break;
         }
     }
 
     if (!found)
     {
         printf("Account not found\n");
+        return;
     }
+
+    // Update the file
     FILE *file = fopen("accounts.txt", "w");
     if (file == NULL)
     {
@@ -391,10 +401,10 @@ void Modify_Acc(accInfo bank_accounts[], int *n)
 
     for (int h = 0; h < *n; h++)
     {
-        fprintf(file, "%s,%s,%s,%lf,%s,%d,%d,%s\n",
+        fprintf(file, "%s,%s,%s,%.2lf,%s,%d-%d,%s\n",
                 bank_accounts[h].accnumber,
                 bank_accounts[h].name,
-                bank_accounts[h].email,
+                bank_accounts[h].address,
                 bank_accounts[h].balance,
                 bank_accounts[h].mobile,
                 bank_accounts[h].dateopen.month,
@@ -405,6 +415,7 @@ void Modify_Acc(accInfo bank_accounts[], int *n)
     fclose(file);
     printf("Account modified successfully\n");
 }
+
 void CHANGE_STATUS(accInfo acc[], int n)
 {
     char search_number[20], desired_status[50];
@@ -417,7 +428,7 @@ void CHANGE_STATUS(accInfo acc[], int n)
 
     for (i = 0; i < n; i++)
     {
-        if (strcmp(acc[i].accnumber, search_number) == 0) 
+        if (strcmp(acc[i].accnumber, search_number) == 0)
         {
             found = 1;
             index = i;
@@ -443,8 +454,7 @@ void CHANGE_STATUS(accInfo acc[], int n)
     }
     else
     {
-       
-        strcpy(acc[index].status, desired_lower); 
+        strcpy(acc[index].status, desired_lower);
 
         // Update the accounts.txt file
         FILE *file = fopen("accounts.txt", "w");
@@ -452,7 +462,10 @@ void CHANGE_STATUS(accInfo acc[], int n)
         {
             for (int j = 0; j < n; j++)
             {
-                fprintf(file, "%s,%s,%s,%.2lf,%s,%d,%d,%s\n",acc[j].accnumber,acc[j].name,acc[j].address,acc[j].balance,acc[j].mobile,acc[j].dateopen.month,acc[j].dateopen.year,acc[j].status);
+                fprintf(file, "%s,%s,%s,%.2lf,%s,%d-%d,%s\n",
+                        acc[j].accnumber, acc[j].name, acc[j].address,
+                        acc[j].balance, acc[j].mobile, acc[j].dateopen.month,
+                        acc[j].dateopen.year, acc[j].status);
             }
             fclose(file);
             printf("The status has been successfully changed to %s\n", desired_lower);
@@ -463,96 +476,116 @@ void CHANGE_STATUS(accInfo acc[], int n)
         }
     }
 }
-    int dailyLimit(double withdrawnToday, double amount)
-    {
-        // Check if adding this amount exceeds daily limit
-        if (withdrawnToday + amount > 50000)
-            return 0; // exceeded
 
-        return 1; // allowed
-    }
-
-void WITHDRAW(accInfo *acc, double *withdrawnToday)
+int dailyLimit(double withdrawnToday, double amount)
 {
+    // Check if adding this amount exceeds daily limit
+    if (withdrawnToday + amount > 50000)
+        return 0; // exceeded
+    return 1;     // allowed
+}
+
+// FIXED: Changed function parameters
+void WITHDRAW(accInfo acc[], int n, double *withdrawnToday)
+{
+    char accnumber[20];
     double amount;
-    char input[100]; //store account number entered by user
+
     printf("\n Withdrawal Process \n");
     printf("Enter active account number: ");
-    scanf("%s", input);
-    // Verify account number and see if it matches
-    if (strcmp(acc->accnumber, input) != 0)
+    scanf("%s", accnumber);
+
+    int found = 0, index = -1;
+
+    // Find the account
+    for (int i = 0; i < n; i++)
     {
-        printf("Error Account number does not match\n");
+        if (strcmp(acc[i].accnumber, accnumber) == 0)
+        {
+            found = 1;
+            index = i;
+            break;
+        }
+    }
+
+    if (!found)
+    {
+        printf("Error: Account not found\n");
         return;
     }
 
-    // Check account status 
-    if (strcmp(acc->status, "active") != 0)
+    // Check account status
+    if (strcmp(acc[index].status, "active") != 0)
     {
-        printf("Warning Account is inactive. Process cannot be completed\n");
+        printf("Warning: Account is inactive. Process cannot be completed\n");
         return;
     }
 
-    // Get withdrawal amount 
+    // Get withdrawal amount
     printf("Enter withdrawal amount: ");
-    if (scanf("%lf", &amount) != 1) //to make sure it is valid input
+    if (scanf("%lf", &amount) != 1) // to make sure it is valid input
     {
         printf("Error: Invalid amount entered.\n");
-        while (getchar() != '\n'); // Clear input buffer
+        while (getchar() != '\n')
+            ; // Clear input buffer
         return;
     }
 
-    //check amount of money enterd
+    // check amount of money entered
     if (amount <= 0)
     {
         printf("Error: Withdrawal amount must be positive\n");
         return;
     }
 
-    //  limit 
+    // Transaction limit
     if (amount > 10000)
     {
         printf("Error: Maximum withdrawal per transaction is 10,000$\n");
         return;
     }
 
-    //Daily limit check 
-    if (!dailyLimit(*withdrawnToday, amount)) 
+    // Daily limit check
+    if (!dailyLimit(*withdrawnToday, amount))
     {
         printf("Error: Daily withdrawal limit exceeded (50,000$)\n");
         return;
     }
 
-    //check if the user has enough money for withdrawal
-    if (amount > acc->balance)
+    // check if the user has enough money for withdrawal
+    if (amount > acc[index].balance)
     {
         printf("Error: Insufficient balance.\n");
-        printf("Current balance: %.2f$\n", acc->balance);
+        printf("Current balance: %.2f$\n", acc[index].balance);
         printf("Requested amount: %.2f$\n", amount);
         return;
     }
 
-    //Process the withdrawal 
-    acc->balance -= amount;
+    // Process the withdrawal
+    acc[index].balance -= amount;
     *withdrawnToday += amount;
-    recordTransaction(accnumber, "WITHDRAW", amount, bank_accounts[i].balance); 
+
+    // Record transaction
+    recordTransaction(acc[index].accnumber, "withdraw", amount, acc[index].balance);
+
     printf("TRANSACTION SUCCESSFUL!\n");
-    printf("Account: %s\n", acc->accnumber);
+    printf("Account: %s\n", acc[index].accnumber);
     printf("Withdrawn: %.2f$\n", amount);
-    printf("New Balance: %.2f$\n", acc->balance);
+    printf("New Balance: %.2f$\n", acc[index].balance);
     printf("Total withdrawn today: %.2f$\n", *withdrawnToday);
 }
+
 void deposit(accInfo acc[], int n)
 {
     char acc_num[20];
-    double deposit;
-    printf("enter your account number:");
+    double deposit_amount;
+    printf("Enter your account number: ");
     scanf("%s", acc_num);
-    printf("Enter the amount you want to deposit:");
-    scanf("%lf", &deposit);
-    if (deposit > 10000)
+    printf("Enter the amount you want to deposit: ");
+    scanf("%lf", &deposit_amount);
+    if (deposit_amount > 10000)
     {
-        printf("Deposit failed: Maximum deposit limit per transaction is 10,000$");
+        printf("Deposit failed: Maximum deposit limit per transaction is 10,000$\n");
         return;
     }
 
@@ -563,7 +596,7 @@ void deposit(accInfo acc[], int n)
         {
             found = 1;
             index = i;
-            break; 
+            break;
         }
     }
 
@@ -571,25 +604,26 @@ void deposit(accInfo acc[], int n)
     {
         if (strcmp(acc[index].status, "active") != 0)
         {
-            printf("Warning: This account is inactive. The process cannot be completed");
+            printf("Warning: This account is inactive. The process cannot be completed\n");
             return;
         }
-        acc[index].balance += deposit;
-        printf("Deposit completed successfully");
+        acc[index].balance += deposit_amount;
+        printf("Deposit completed successfully\n");
 
         // to record the transaction
-        recordTransaction(acc[index].accnumber, "deposit", deposit, acc[index].balance);
+        recordTransaction(acc[index].accnumber, "deposit", deposit_amount, acc[index].balance);
     }
     else
     {
-        printf("Error: Account not found");
+        printf("Error: Account not found\n");
     }
 }
+
 void transfer(accInfo acc[], int n)
 {
     char sender_acc[20], receiver_acc[20];
     double amount;
-    int sender_index = -1, receiver_index = -1; //not found at first
+    int sender_index = -1, receiver_index = -1; // not found at first
     printf("Enter sender account number: ");
     scanf("%s", sender_acc);
     printf("Enter receiver account number: ");
@@ -608,7 +642,7 @@ void transfer(accInfo acc[], int n)
     for (int i = 0; i < n; i++)
     {
         if (strcmp(acc[i].accnumber, sender_acc) == 0)
-            sender_index = i; 
+            sender_index = i;
         if (strcmp(acc[i].accnumber, receiver_acc) == 0)
             receiver_index = i;
     }
@@ -653,7 +687,8 @@ void transfer(accInfo acc[], int n)
 
     printf("Transfer successful. New balance: $%.2f\n", acc[sender_index].balance);
 }
-void Report(char accnumber[]) 
+
+void Report(char accnumber[])
 {
     char lines[100][100]; // Array to store transaction lines from the file
     char filename[20];    // To store the file name (accountNumber.txt)
@@ -663,14 +698,14 @@ void Report(char accnumber[])
 
     FILE *f = fopen(filename, "r");
     if (f == NULL)
-    {  
+    {
         printf("No transactions found for this account\n");
         return;
     }
 
     while (fgets(lines[count], sizeof(lines[count]), f))
     {
-        count++; 
+        count++;
     }
 
     fclose(f);
@@ -692,8 +727,136 @@ void Report(char accnumber[])
         printf("%s", lines[i]);
     }
 }
-int main()
-{
-   
-    return 0;
+void QUIT(){
+    printf("thankyou for using bankmanagment system\n");
+    printf("GOODBYE!!");
+    exit(0);
+
 }
+void initialMenu()
+{
+    accInfo accounts[100];
+    int numAccounts = 0;
+    double withdrawnToday = 0.0;
+    int choice;
+
+    do
+    {
+        printf("\n   BANK MANAGEMENT SYSTEM   \n");
+        printf("1. LOGIN\n");
+        printf("2. QUIT\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice)
+        {
+        case 1:
+            if (LOGIN())
+            {
+                printf("Login successful!\n");
+                // Load accounts automatically after successful login
+                loadAccounts(accounts, &numAccounts);
+                // Go to main menu
+                mainMenu(accounts, &numAccounts, &withdrawnToday);
+            }
+            else
+            {
+                // Login failed - ask user what to do
+                int retryChoice;
+                printf("\nLogin failed. What would you like to do?\n");
+                printf("1. Go back to main menu\n");
+                printf("2. Exit program\n");
+                printf("Enter your choice: ");
+                scanf("%d", &retryChoice);
+
+                if (retryChoice == 2)
+                {
+                    printf("Exiting program. Goodbye!\n");
+                    exit(0);
+                }
+                // If choice is 1, it will loop back to initial menu
+            }
+            break;
+
+        case 2:
+            printf("Thank you for using Bank Management System. Goodbye!\n");
+            exit(0);
+
+        default:
+            printf("Invalid choice! Please try again.\n");
+        }
+
+    } while (1);
+}
+
+// Main menu with all banking functions after successful login
+void mainMenu(accInfo accounts[], int *numAccounts, double *withdrawnToday)
+{
+    int mainChoice;
+
+    do
+    {
+        printf("\n   MAIN MENU   \n");
+        printf("1. ADD Account\n");
+        printf("2. DELETE Account\n");
+        printf("3. MODIFY Account\n");
+        printf("4. SEARCH Account\n");
+        printf("5. ADVANCED SEARCH\n");
+        printf("6. CHANGE_STATUS\n");
+        printf("7. WITHDRAW\n");
+        printf("8. DEPOSIT\n");
+        printf("9. TRANSFER\n");
+        printf("10. REPORT\n");
+        printf("11. QUIT (Logout)\n");
+        printf("Enter your choice: ");
+        scanf("%d", &mainChoice);
+
+        switch (mainChoice)
+        {
+        case 1:
+            Add_Acc(accounts, numAccounts);
+            break;
+        case 2:
+            Delete_Acc(accounts, numAccounts);
+            break;
+        case 3:
+            Modify_Acc(accounts, numAccounts);
+            break;
+        case 4:
+            search(accounts, *numAccounts);
+            break;
+        case 5:
+            advanced_search(accounts, *numAccounts);
+            break;
+        case 6:
+            CHANGE_STATUS(accounts, *numAccounts);
+            break;
+        case 7:
+            WITHDRAW(accounts, *numAccounts, withdrawnToday);
+            break;
+        case 8:
+            deposit(accounts, *numAccounts);
+            break;
+        case 9:
+            transfer(accounts, *numAccounts);
+            break;
+        case 10:
+        {
+            char accnumber[20];
+            printf("Enter account number for transaction report: ");
+            scanf("%s", accnumber);
+            Report(accnumber);
+        }
+        break;
+        case 11:
+            printf("Logging out... Returning to initial menu.\n");
+            return; // Go back to initial menu
+        default:
+            printf("Invalid choice! Please try again.\n");
+        }
+
+        int main()
+        {
+            mainMenu();
+            return 0;
+        }
