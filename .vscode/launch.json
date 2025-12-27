@@ -2,9 +2,6 @@
   "version": "0.2.0",
   "configurations": [
     
-    "code-runner.executorMap": {
-      "c": "cd $dir && gcc $fileName -o $fileNameWithoutExt && $dir$fileNameWithoutExt",
-    }
     {
       "name": "C/C++ Runner: Debug Session",
       "type": "cppdbg",
@@ -12,8 +9,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "c:/Users/hp/OneDrive/Desktop/finalproject  prog",
-      "program": "c:/Users/hp/OneDrive/Desktop/finalproject  prog/build/Debug/outDebug",
+      "cwd": ".",
+      "program": "build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
