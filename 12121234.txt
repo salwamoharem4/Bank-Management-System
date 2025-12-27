@@ -1,0 +1,3 @@
+2025-12 withdraw 500.00 Balance: 790.00
+2025-12 deposit 200.00 Balance: 990.00
+2025-12 transfer-out 300.00 Balance: 690.00

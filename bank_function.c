@@ -7,7 +7,7 @@
 #include "bank_function.h"
 #include "colors.h"
 
-// Color functions - ADD THESE
+// Color functions 
 void printError(const char *msg)
 {
     printf(RED "%s" RESET, msg);
@@ -23,11 +23,27 @@ void printWarning(const char *msg)
     printf(YELLOW "%s" RESET, msg);
 }
 
+void printCyan(const char *msg)
+{
+    printf(CYAN "%s" RESET, msg);
+}
+void printBoldCyan(const char *msg)
+{
+    printf(BOLD CYAN "%s" RESET, msg);
+}
+void printBlue(const char *msg)
+{
+    printf(BLUE "%s" RESET, msg);
+}
+void printNavyBlue(const char *msg)
+{
+    printf(NAVY_BLUE "%s" RESET, msg);
+}
+
 void clearInputBuffer()
 {
     int c;
-    while ((c = getchar()) != '\n' && c != EOF)
-        ;
+    while ((c = getchar()) != '\n' && c != EOF);
 }
 
 Date getCurrentDate()
@@ -117,7 +133,17 @@ int isValidnumber(const char *str)
 
     return 1;
 }
+int isValidAccountNumber(const char *accNum)
+{
+    // Check 1: Must be exactly 10 characters
+    if (strlen(accNum) != 10)
+    {
+        return 0;
+    }
 
+    // Check 2: All characters must be digits
+    return isValidnumber(accNum); // hstkhdm el function ely bt check eno integer
+}
 _Bool is_valid_name(const char *name)
 {
     for (int i = 0; name[i]; i++)
@@ -192,6 +218,23 @@ void LOAD(accInfo bank_accounts[], int *n)
 
         if (result == 8)
         {
+            char *status_ptr = bank_accounts[i].status;
+
+            // Remove leading spaces (alshan lma byla2y space abl active aw inactive me btb2a equal ely aando)
+            while (*status_ptr == ' ')
+                status_ptr++; //delwaaty law feeh space bkhleeh yshwar ala awl harf
+
+            // Remove trailing spaces (bsheel ay spaces)
+            int len = strlen(status_ptr);
+            while (len > 0 && (status_ptr[len - 1] == ' ' ||
+                               status_ptr[len - 1] == '\n' || status_ptr[len - 1] == '\r'))
+            {
+                status_ptr[len - 1] = '\0';
+                len--;
+            }
+
+            // Copy trimmed status back
+            strcpy(bank_accounts[i].status, status_ptr);
             i++;
         }
         else
@@ -204,7 +247,9 @@ void LOAD(accInfo bank_accounts[], int *n)
     fclose(file);
     if (*n > 0)
     {
-        printSuccess("Successfully loaded %d accounts.\n");
+        char successMsg[100];
+        sprintf(successMsg, "Successfully loaded %d accounts.\n", *n); // format into string (write into a string)
+        printSuccess(successMsg);                                      // to print it with green color
     }
     else
     {
@@ -354,7 +399,7 @@ void Add_Acc(accInfo bank_accounts[], int *n)
         scanf("%s", temp_buffer);
         clearInputBuffer();
 
-        if (isValidnumber(temp_buffer))
+        if (isValidAccountNumber(temp_buffer))
         {
             strncpy(new_account.accnumber, temp_buffer, sizeof(new_account.accnumber) - 1);
             new_account.accnumber[sizeof(new_account.accnumber) - 1] = '\0';
@@ -362,7 +407,7 @@ void Add_Acc(accInfo bank_accounts[], int *n)
         }
         else
         {
-            printError("Invalid account number. Please enter numbers only\n");
+            printError("Invalid account number\n.please enter numbers of 10 digits only\n");
         }
     }
 
@@ -753,7 +798,9 @@ void CHANGE_STATUS(accInfo acc[], int n)
                             acc[j].dateopen.year, acc[j].status);
                 }
                 fclose(file);
-                printSuccess("The status has been successfully changed to %s\n");
+                char successMsg[100];
+                sprintf(successMsg, "The status has been successfully changed to %s\n", desired_status);
+                printSuccess(successMsg);
             }
             else
             {
@@ -875,6 +922,12 @@ void deposit(accInfo acc[], int n)
 
             if (deposit_amount > 0)
             {
+                // check deposit limit
+                if (deposit_amount > 10000)
+                {
+                    printError("Error: Maximum deposit per transaction is 10,000$\n");
+                    continue; // Ask for amount again
+                }
                 break;
             }
             else
@@ -1036,8 +1089,8 @@ void Report(char accnumber[])
 
 void QUIT()
 {
-    printf("thankyou for using bankmanagment system\n");
-    printf("GOODBYE!!");
+    printSuccess("Thank you for using Bank Management System\n");
+    printSuccess("GOODBYE!!\n");
     exit(0);
 }
 // ========== MENU FUNCTIONS ==========
@@ -1183,10 +1236,10 @@ void initialMenu()
 
     do
     {
-        printf("\n   BANK MANAGEMENT SYSTEM   \n");
-        printf("1. LOGIN\n");
-        printf("2. QUIT\n");
-        printf("Enter your choice: ");
+        printBoldCyan("====BANK MANAGEMENT SYSTEM===\n");
+        printBlue("1. LOGIN\n");
+        printBlue("2. QUIT\n");
+        printBlue("Enter your choice: ");
         scanf("%d", &choice);
 
         switch (choice)
@@ -1209,15 +1262,13 @@ void initialMenu()
 
                 if (retryChoice == 2)
                 {
-                    printf("Exiting program. Goodbye!\n");
-                    exit(0);
+                    QUIT();
                 }
             }
             break;
 
         case 2:
-            printf("Thank you for using Bank Management System. Goodbye!\n");
-            exit(0);
+           QUIT();
 
         default:
             printWarning("Invalid choice! Please try again.\n");
@@ -1306,125 +1357,127 @@ void deleteMult(accInfo acc[], int *n, Date date)
 {
     int deletedCount = 0;
 
-    if (date.month == 0) // Option 2 ana amla intialize lel month yb2a be 2 lma ykhtar option2
+    if (date.month == 0) // Option 2: Delete inactive accounts >90 days with zero balance
+    {
         Date currentDate = getCurrentDate();
 
-    for (int i = 0; i < *n; i++)
-    {
-        if (strcmp(acc[i].status, "inactive") == 0 &&
-            acc[i].balance == 0.0 &&
-            isInactiveMoreThan90Days(acc[i], currentDate))
+        for (int i = 0; i < *n; i++)
         {
-            // Delete account by shifting remaining accounts left
-            // bfdl a3ml shift shmal fa bshel el account el mesh mhtgah
-            for (int j = i; j < *n - 1; j++)
+            if (strcmp(acc[i].status, "inactive") == 0 &&
+                acc[i].balance == 0.0 &&
+                isInactiveMoreThan90Days(acc[i], currentDate))
             {
-                acc[j] = acc[j + 1];
+                // Delete account by shifting remaining accounts left
+                for (int j = i; j < *n - 1; j++)
+                {
+                    acc[j] = acc[j + 1];
+                }
+                (*n)--; // b3d ma 3mlna delete number of account decreased by one
+                i--;    // Stay at same index to check shifted element
+                deletedCount++;
             }
-            (*n)--; // b3d ma 3mlna delete number of account decreased by one
-            i--;    // Stay at same index to check shifted element
-            // b3d ma hasl shift baat btshawr aala acc tane mhtag a3mlo check
-            deletedCount++;
         }
-    }
 
-    if (deletedCount == 0)
-    {
-        printWarning("No inactive accounts found with balance zero and inactive >90 days.\n");
-    }
-    else
-    {
-        printSuccess("%d inactive accounts deleted successfully.\n");
-        printf("Accounts deleted: %d\n", deletedCount);
-    }
-}
-else // Option 1: Delete by date
-{
-    for (int i = 0; i < *n; i++)
-    {
-        if (acc[i].dateopen.year == date.year &&
-            acc[i].dateopen.month == date.month)
+        if (deletedCount == 0)
         {
-            // Delete account by shifting remaining accounts left
-            for (int j = i; j < *n - 1; j++)
-            {
-                acc[j] = acc[j + 1];
-            }
-            (*n)--;
-            i--; // Stay at same index to check shifted element
-            deletedCount++;
-        }
-    }
-
-    if (deletedCount == 0)
-    {
-        char warningMsg[100];
-        sprintf(warningMsg, "No accounts found created on %s %d\n", monthname(date.month), date.year);
-        printWarning(warningMsg);
-    }
-    else
-    {
-        char successMsg[100];
-        sprintf(successMsg, "%d inactive accounts deleted successfully.\n", deletedCount);
-        printSuccess(successMsg);
-        printf("Accounts created in %s %d deleted: %d\n", monthname(date.month), date.year, deletedCount);
-    }
-}
-
-if (deletedCount > 0)
-{
-    if (askToSave())
-    {
-        SAVE(acc, *n);
-    }
-    else
-    {
-        // Update file anyway
-        FILE *file = fopen("accounts.txt", "w");
-        if (file != NULL)
-        {
-            for (int k = 0; k < *n; k++)
-            {
-                fprintf(file, "%s,%s,%s,%.2lf,%s,%d-%d,%s\n",
-                        acc[k].accnumber,
-                        acc[k].name,
-                        acc[k].address,
-                        acc[k].balance,
-                        acc[k].mobile,
-                        acc[k].dateopen.month,
-                        acc[k].dateopen.year,
-                        acc[k].status);
-            }
-            fclose(file);
+            printWarning("No inactive accounts found with balance zero and inactive >90 days.\n");
         }
         else
         {
-            printError("Error opening accounts.txt\n");
+            char successMsg[100];
+            sprintf(successMsg, "%d inactive accounts deleted successfully.\n", deletedCount);
+            printSuccess(successMsg);
+            printf("Accounts deleted: %d\n", deletedCount);
+        }
+    }
+    else // Option 1: Delete by date
+    {
+        for (int i = 0; i < *n; i++)
+        {
+            if (acc[i].dateopen.year == date.year &&
+                acc[i].dateopen.month == date.month)
+            {
+                // Delete account by shifting remaining accounts left
+                for (int j = i; j < *n - 1; j++)
+                {
+                    acc[j] = acc[j + 1];
+                }
+                (*n)--;
+                i--; // Stay at same index to check shifted element
+                deletedCount++;
+            }
+        }
+
+        if (deletedCount == 0)
+        {
+            char warningMsg[100];
+            sprintf(warningMsg, "No accounts found created on %s %d\n", monthname(date.month), date.year);
+            printWarning(warningMsg);
+        }
+        else
+        {
+            char successMsg[100];
+            sprintf(successMsg, "%d accounts deleted successfully.\n", deletedCount);
+            printSuccess(successMsg);
+            printf("Accounts created in %s %d deleted: %d\n", monthname(date.month), date.year, deletedCount);
+        }
+    }
+
+    if (deletedCount > 0)
+    {
+        if (askToSave())
+        {
+            SAVE(acc, *n);
+        }
+        else
+        {
+            // Update file anyway
+            FILE *file = fopen("accounts.txt", "w");
+            if (file != NULL)
+            {
+                for (int k = 0; k < *n; k++)
+                {
+                    fprintf(file, "%s,%s,%s,%.2lf,%s,%d-%d,%s\n",
+                            acc[k].accnumber,
+                            acc[k].name,
+                            acc[k].address,
+                            acc[k].balance,
+                            acc[k].mobile,
+                            acc[k].dateopen.month,
+                            acc[k].dateopen.year,
+                            acc[k].status);
+                }
+                fclose(file);
+            }
+            else
+            {
+                printError("Error opening accounts.txt\n");
+            }
         }
     }
 }
-}
+
 void mainMenu(accInfo accounts[], int *numAccounts, double *withdrawnToday)
 {
     int mainChoice;
 
     do
     {
-        printf("\n=== MAIN MENU ===\n");
-        printf("1. ADD Account\n");
-        printf("2. DELETE Account\n");
-        printf("3. MODIFY Account\n");
-        printf("4. SEARCH Account\n");
-        printf("5. ADVANCED SEARCH\n");
-        printf("6. CHANGE_STATUS\n");
-        printf("7. WITHDRAW\n");
-        printf("8. DEPOSIT\n");
-        printf("9. TRANSFER\n");
-        printf("10. REPORT\n");
-        printf("11. SAVE\n");
-        printf("12. PRINT(SORT)\n");
-        printf("13. DELETE MULTIPLE Accounts\n");
-        printf("14. QUIT \n");
+        printCyan("\n=== MAIN MENU ===\n");
+        printNavyBlue("1. ADD Account\n");
+        printNavyBlue("2. DELETE Account\n");
+        printNavyBlue("3. MODIFY Account\n");
+        printNavyBlue("4. SEARCH Account\n");
+        printNavyBlue("5. ADVANCED SEARCH\n");
+        printNavyBlue("6. CHANGE_STATUS\n");
+        printNavyBlue("7. WITHDRAW\n");
+        printNavyBlue("8. DEPOSIT\n");
+        printNavyBlue("9. TRANSFER\n");
+        printNavyBlue("10. REPORT\n");
+        printNavyBlue("11. SAVE\n");
+        printNavyBlue("12. PRINT(SORT)\n");
+        printNavyBlue("13. DELETE MULTIPLE Accounts\n");
+        printNavyBlue("14. QUIT \n");
         printf("Enter your choice: ");
         scanf("%d", &mainChoice);
 

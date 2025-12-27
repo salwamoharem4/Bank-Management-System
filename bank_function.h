@@ -8,6 +8,7 @@ Date getCurrentDate();
 char *monthname(int month);
 void clearInputBuffer();
 int isValidnumber(const char *str);
+int isValidAccountNumber(const char *accNum);
 _Bool is_valid_name(const char *name);
 int is_valid_email(const char *email);
 void bonusMenu(accInfo accounts[], int *numAccounts);
