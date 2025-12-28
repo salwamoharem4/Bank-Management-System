@@ -7,7 +7,7 @@
 #include "bank_function.h"
 #include "colors.h"
 
-// Color functions 
+// Color functions
 void printError(const char *msg)
 {
     printf(RED "%s" RESET, msg);
@@ -40,19 +40,20 @@ void printNavyBlue(const char *msg)
     printf(NAVY_BLUE "%s" RESET, msg);
 }
 
-void clearInputBuffer()
+void clearInputBuffer() // clears any leftovers
 {
     int c;
-    while ((c = getchar()) != '\n' && c != EOF);
+    while ((c = getchar()) != '\n' && c != EOF)
+        ;
+    // read characters untill newline or EOF
 }
-
 Date getCurrentDate()
 {
     Date current;
-    time_t t = time(NULL);
+    time_t t = time(NULL); // return seconds since 1Jan,1970
     struct tm tm = *localtime(&t);
-    current.year = tm.tm_year + 1900;
-    current.month = tm.tm_mon + 1;
+    current.year = tm.tm_year + 1900; // fix year offset
+    current.month = tm.tm_mon + 1;    // fix month offset alshan btbd2 mn 0 mesh 1
     return current;
 }
 
@@ -93,22 +94,20 @@ int is_valid_email(const char *email)
 {
     if (!email)
         return 0;
-    if (strchr(email, ','))
+    if (strchr(email, ',')) // bt check law feeh comma alshan heya el token ande fel file
         return 0;
-    char *at = strchr(email, '@');
-    if (!at || at == email)
+    char *at = strchr(email, '@'); // at now has the address of @
+    if (!at || at == email)        // check if @ not found (strchr returns null if not found) or @ wasfound at the begging of gmail
         return 0;
-
-    char *dot = strchr(at + 1, '.');
-    if (!dot || dot[1] == '\0')
+    char *dot = strchr(at + 1, '.'); // dot after @
+    if (!dot || dot[1] == '\0')      // check there is any char after dot
         return 0;
-
     return 1;
 }
 
-int isValidnumber(const char *str)
+int isValidnumber(const char *str) // this function check thatit only contain from[0,9] and one decimal point optinal
 {
-    if (!str || !*str)
+    if (!str || !*str) // check if it is null or empty
         return 0;
 
     int dots = 0;
@@ -135,24 +134,22 @@ int isValidnumber(const char *str)
 }
 int isValidAccountNumber(const char *accNum)
 {
-    // Check 1: Must be exactly 10 characters
+    //  Must be exactly 10 characters
     if (strlen(accNum) != 10)
     {
         return 0;
     }
-
-    // Check 2: All characters must be digits
+    // All characters must be digits
     return isValidnumber(accNum); // hstkhdm el function ely bt check eno integer
 }
-_Bool is_valid_name(const char *name)
+_Bool is_valid_name(const char *name) // btakhod bas char w spaces
 {
     for (int i = 0; name[i]; i++)
         if (!isalpha(name[i]) && name[i] != ' ')
             return 0;
     return name[0] != '\0';
 }
-
-int LOGIN()
+int LOGIN() // check username/pass against user.txt
 {
     char u[50], p[50], username[50], pass[50], *token, buffer[100];
     FILE *ptr = fopen("users.txt", "r");
@@ -165,7 +162,7 @@ int LOGIN()
     scanf("%49s", username);
     printf("Enter password: ");
     scanf("%49s", pass);
-    while (fgets(buffer, sizeof(buffer), ptr) != NULL)
+    while (fgets(buffer, sizeof(buffer), ptr) != NULL) // reads file line by line
     {
         token = strtok(buffer, " \t\n");
         if (token != NULL)
@@ -174,11 +171,11 @@ int LOGIN()
         token = strtok(NULL, " \t\n");
         if (token != NULL)
             strcpy(p, token);
-        p[strcspn(p, "\n")] = '\0';
+        p[strcspn(p, "\n")] = '\0'; // clean newline from pass
         if (strcmp(u, username) == 0 && strcmp(p, pass) == 0)
         {
             fclose(ptr);
-            return 1;
+            return 1; // user,pass match
         }
     }
     fclose(ptr);
@@ -194,11 +191,9 @@ void LOAD(accInfo bank_accounts[], int *n)
         printError("Error opening accounts.txt file.\n");
         return;
     }
-
     char line[5000];
-    *n = 0;
-    int i = 0;
-
+    *n = 0;    // holds number of accounts
+    int i = 0; // track postion during loading
     while (fgets(line, sizeof(line), file) != NULL && i < 100)
     {
         line[strcspn(line, "\n")] = '\0';
@@ -216,23 +211,20 @@ void LOAD(accInfo bank_accounts[], int *n)
                             &bank_accounts[i].dateopen.year,
                             bank_accounts[i].status);
 
-        if (result == 8)
+        if (result == 8) // it Stores how many items were successfully parsed
         {
             char *status_ptr = bank_accounts[i].status;
 
             // Remove leading spaces (alshan lma byla2y space abl active aw inactive me btb2a equal ely aando)
             while (*status_ptr == ' ')
-                status_ptr++; //delwaaty law feeh space bkhleeh yshwar ala awl harf
-
+                status_ptr++; // delwaaty law feeh space bkhleeh yshwar ala awl harf
             // Remove trailing spaces (bsheel ay spaces)
             int len = strlen(status_ptr);
-            while (len > 0 && (status_ptr[len - 1] == ' ' ||
-                               status_ptr[len - 1] == '\n' || status_ptr[len - 1] == '\r'))
+            while (len > 0 && (status_ptr[len - 1] == ' ' || status_ptr[len - 1] == '\n'))
             {
                 status_ptr[len - 1] = '\0';
                 len--;
             }
-
             // Copy trimmed status back
             strcpy(bank_accounts[i].status, status_ptr);
             i++;
@@ -1268,7 +1260,7 @@ void initialMenu()
             break;
 
         case 2:
-           QUIT();
+            QUIT();
 
         default:
             printWarning("Invalid choice! Please try again.\n");
