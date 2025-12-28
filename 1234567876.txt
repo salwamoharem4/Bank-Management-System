@@ -1,0 +1,6 @@
+2025-12 withdraw 98.76 Balance: 1101.24
+2025-12 withdraw 91.55 Balance: 1009.69
+2025-12 deposit 55.77 Balance: 1065.46
+2025-12 deposit 90.00 Balance: 1155.46
+2025-12 transfer-out 99.65 Balance: 1055.81
+2025-12 transfer-out 88.76 Balance: 967.05

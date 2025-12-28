@@ -118,12 +118,6 @@ int isValidnumber(const char *str) // this function check thatit only contain fr
         {
             continue;
         }
-        else if (str[i] == '.')
-        {
-            dots++;
-            if (dots > 1)
-                return 0;
-        }
         else
         {
             return 0;
@@ -148,6 +142,40 @@ _Bool is_valid_name(const char *name) // btakhod bas char w spaces
         if (!isalpha(name[i]) && name[i] != ' ')
             return 0;
     return name[0] != '\0';
+}
+int isValidMoney(const char *str)
+{
+    if (!str || !*str)
+        return 0;
+
+    int dots = 0;
+    int digits_before_dot = 0;
+    int digits_after_dot = 0;
+
+    for (int i = 0; str[i] != '\0'; i++)
+    {
+        if (str[i] >= '0' && str[i] <= '9')
+        {
+            if (dots == 0)
+                digits_before_dot++;
+            else
+                digits_after_dot++;
+        }
+        else if (str[i] == '.')
+        {
+            dots++;
+            if (dots > 1) // Only one decimal point allowed
+                return 0;
+        }
+        else
+        {
+            return 0;
+        }
+    }
+    if (dots == 1 && digits_after_dot == 0)
+        return 0;
+
+    return 1;
 }
 int LOGIN() // check username/pass against user.txt
 {
@@ -251,18 +279,18 @@ void LOAD(accInfo bank_accounts[], int *n)
 
 void search(accInfo acc[], int n)
 {
-    char search_number[20]; //extra space to avoid buffer overflow
+    char search_number[20]; // extra space to avoid buffer overflow
     printf("enter your account's number: ");
     scanf("%s", search_number);
     clearInputBuffer();
-    if (!isValidAccountNumber(search_number)) //check first it is valid user
+    if (!isValidAccountNumber(search_number)) // check first it is valid user
     {
         printError("Invalid account number format\n");
         return;
     }
     int found = 0;
     int i;
-    for (i = 0; i < n; i++) //linear search
+    for (i = 0; i < n; i++) // linear search
     {
         if (strcmp(search_number, acc[i].accnumber) == 0)
         {
@@ -284,7 +312,8 @@ void search(accInfo acc[], int n)
         printError("Couldn't find this account number\n");
 }
 
-void advanced_search(accInfo acc[], int n){ // Search for bank accounts by name keyword 
+void advanced_search(accInfo acc[], int n)
+{ // Search for bank accounts by name keyword
     char keyword[100];
     int found = 0;
     clearInputBuffer();
@@ -292,9 +321,9 @@ void advanced_search(accInfo acc[], int n){ // Search for bank accounts by name 
     fgets(keyword, sizeof(keyword), stdin);
     keyword[strcspn(keyword, "\n")] = '\0'; // Remove newline
     int i;
-    for (i = 0; i < n; i++) //linear search 
+    for (i = 0; i < n; i++) // linear search
     {
-        if (strstr(acc[i].name, keyword) != NULL) //strstr search for keyword in name
+        if (strstr(acc[i].name, keyword) != NULL) // strstr search for keyword in name
         {
             printf("Account Number : %s\n", acc[i].accnumber);
             printf("Name: %s\n", acc[i].name);
@@ -313,10 +342,10 @@ void advanced_search(accInfo acc[], int n){ // Search for bank accounts by name 
         printError("Couldn't find this account name\n");
 }
 
-void recordTransaction(char *accnumber, char *type, double amount, double new_balance) //record financial transaction
+void recordTransaction(char *accnumber, char *type, double amount, double new_balance) // record financial transaction
 {
     char filename[50];
-    sprintf(filename, "%s.txt", accnumber); //filename = accnumber.txt
+    sprintf(filename, "%s.txt", accnumber); // filename = accnumber.txt
     FILE *file = fopen(filename, "a");
     if (file != NULL)
     {
@@ -329,9 +358,15 @@ void recordTransaction(char *accnumber, char *type, double amount, double new_ba
                 new_balance);
         fclose(file);
     }
+    else
+    {
+        char errorMsg[100];
+        sprintf(errorMsg, "Error opening transaction file for account %s\n", accnumber);
+        printError(errorMsg);
+    }
 }
 
-int isDuplicate(accInfo bank_accounts[], int n, char *account_num)//Check if an account number already exists
+int isDuplicate(accInfo bank_accounts[], int n, char *account_num) // Check if an account number already exists
 {
     int i;
     for (i = 0; i < n; i++)
@@ -349,7 +384,7 @@ int askToSave()
     char choice;
     printf("\nDo you want to save changes? (y/n): ");
     scanf(" %c", &choice);
-    return (choice == 'y' || choice == 'Y'); //return 1 law dakhl y/Y
+    return (choice == 'y' || choice == 'Y'); // return 1 law dakhl y/Y
 }
 
 void SAVE(accInfo accounts[], int numAccounts)
@@ -412,7 +447,7 @@ void Add_Acc(accInfo bank_accounts[], int *n)
         fgets(new_account.name, sizeof(new_account.name), stdin);
         new_account.name[strcspn(new_account.name, "\n")] = '\0';
 
-        if (strlen(new_account.name) == sizeof(new_account.name) - 1) //there are leftovers it must be cleaned
+        if (strlen(new_account.name) == sizeof(new_account.name) - 1) // there are leftovers it must be cleaned
         {
             clearInputBuffer();
         }
@@ -453,7 +488,7 @@ void Add_Acc(accInfo bank_accounts[], int *n)
             clearInputBuffer();
         }
 
-        if (isValidnumber(temp_buffer))
+        if (isValidMoney(temp_buffer))
         {
             sscanf(temp_buffer, "%lf", &new_account.balance);
             break;
@@ -540,9 +575,9 @@ void Delete_Acc(accInfo bank_accounts[], int *n)
 
             for (int j = i; j < *n - 1; j++)
             {
-                bank_accounts[j] = bank_accounts[j + 1]; //shift to remove this user
+                bank_accounts[j] = bank_accounts[j + 1]; // shift to remove this user
             }
-            (*n)--; //users decreased by one
+            (*n)--; // users decreased by one
 
             if (askToSave())
             {
@@ -667,28 +702,7 @@ void Modify_Acc(accInfo bank_accounts[], int *n)
     }
     else
     {
-        FILE *file = fopen("accounts.txt", "w");
-        if (file == NULL)
-        {
-            printError("Error opening accounts.txt\n");
-            return;
-        }
-
-        for (int h = 0; h < *n; h++)
-        {
-            fprintf(file, "%s,%s,%s,%.2lf,%s,%d-%d,%s\n",
-                    bank_accounts[h].accnumber,
-                    bank_accounts[h].name,
-                    bank_accounts[h].address,
-                    bank_accounts[h].balance,
-                    bank_accounts[h].mobile,
-                    bank_accounts[h].dateopen.month,
-                    bank_accounts[h].dateopen.year,
-                    bank_accounts[h].status);
-        }
-
-        fclose(file);
-        printSuccess("Account modified successfully\n");
+        printSuccess("Account modified in memory only (not saved to file)\n");
     }
 }
 
@@ -748,11 +762,11 @@ void CHANGE_STATUS(accInfo acc[], int n)
         else
         {
             printSuccess("Account modified in memory only (not saved to file)\n");
-        }      
+        }
     }
 }
 
-int dailyLimit(double withdrawnToday, double amount) //check that withdrawn amount doesnot exceed 50000
+int dailyLimit(double withdrawnToday, double amount) // check that withdrawn amount doesnot exceed 50000
 {
     if (withdrawnToday + amount > 50000)
         return 0;
@@ -794,12 +808,14 @@ void WITHDRAW(accInfo acc[], int n, double *withdrawnToday)
     }
 
     printf("Enter withdrawal amount: ");
-    if (scanf("%lf", &amount) != 1) //this check that the double entered is valid
+    if (scanf("%lf", &amount) != 1)
     {
         printError("Error: Invalid amount entered.\n");
-        while (getchar() != '\n');
+        while (getchar() != '\n')
+            ;
         return;
     }
+    clearInputBuffer();
 
     if (amount <= 0)
     {
@@ -826,7 +842,7 @@ void WITHDRAW(accInfo acc[], int n, double *withdrawnToday)
 
     acc[index].balance -= amount;
     *withdrawnToday += amount;
-    recordTransaction(acc[index].accnumber, "withdraw", amount, acc[index].balance);//used in report function
+    recordTransaction(acc[index].accnumber, "withdraw", amount, acc[index].balance); // used in report function
     printSuccess("TRANSACTION SUCCESSFUL!\n");
     printf("Account: %s\n", acc[index].accnumber);
     printf("Withdrawn: %.2f$\n", amount);
@@ -837,8 +853,9 @@ void WITHDRAW(accInfo acc[], int n, double *withdrawnToday)
     {
         SAVE(acc, n);
     }
-    else{
-         printWarning("WARNING: Withdrawal recorded in transaction log but balance not updated in accounts.txt!\n");
+    else
+    {
+        printWarning("WARNING: Withdrawal recorded in transaction log but balance not updated in accounts.txt!\n");
     }
 }
 void deposit(accInfo acc[], int n)
@@ -854,7 +871,7 @@ void deposit(accInfo acc[], int n)
         printf("Enter the amount you want to deposit: ");
         scanf("%s", temp_buffer);
         clearInputBuffer();
-        if (isValidnumber(temp_buffer))
+        if (isValidMoney(temp_buffer))
         {
             sscanf(temp_buffer, "%lf", &deposit_amount);
             if (deposit_amount > 0)
@@ -904,22 +921,26 @@ void deposit(accInfo acc[], int n)
         {
             SAVE(acc, n);
         }
+        else
+        {
+            printWarning("Deposit recorded in transaction log but balance not updated in accounts.txt!\n");
+        }
     }
     else
     {
-        printWarning(" Deposit recorded in transaction log but balance not updated in accounts.txt\n");
+        printWarning("Account not found!\n");
     }
 }
 void transfer(accInfo acc[], int n)
 {
     char sender_acc[20], receiver_acc[20];
-    char temp_buffer[1000] ;
+    char temp_buffer[1000];
     double amount;
     int sender_index = -1, receiver_index = -1;
     printf("Enter sender account number: ");
     scanf("%s", sender_acc);
     clearInputBuffer();
-    if (!isValidAccountNumber(sender_acc)) //ntaakd eno valid accnumber wala laa
+    if (!isValidAccountNumber(sender_acc)) // ntaakd eno valid accnumber wala laa
     {
         printError("Error: Invalid sender account number format (must be 10 digits)\n");
         return;
@@ -932,7 +953,7 @@ void transfer(accInfo acc[], int n)
         printError("Error: Invalid receiver account number format (must be 10 digits)\n");
         return;
     }
-    if (strcmp(sender_acc, receiver_acc) == 0) //bt2kd enhom mesh nfs el shakhs
+    if (strcmp(sender_acc, receiver_acc) == 0) // bt2kd enhom mesh nfs el shakhs
     {
         printError("Error: Cannot transfer to the same account.\n");
         return;
@@ -981,7 +1002,7 @@ void transfer(accInfo acc[], int n)
             clearInputBuffer();
         }
 
-        if (isValidnumber(temp_buffer))
+        if (isValidMoney(temp_buffer))
         {
             sscanf(temp_buffer, "%lf", &amount);
 
@@ -1012,13 +1033,13 @@ void transfer(accInfo acc[], int n)
     acc[sender_index].balance -= amount;
     acc[receiver_index].balance += amount;
 
-    recordTransaction(sender_acc, "transfer-out", amount, acc[sender_index].balance); //for report function
-    recordTransaction(receiver_acc, "transfer-in", amount, acc[receiver_index].balance); //same
+    recordTransaction(sender_acc, "transfer-out", amount, acc[sender_index].balance);    // for report function
+    recordTransaction(receiver_acc, "transfer-in", amount, acc[receiver_index].balance); // same
 
     printSuccess("Transfer successful!\n");
     printf("Transferred: $%.2f\n", amount);
-    printf("Sender (%s): $%.2f → $%.2f\n", sender_acc, sender_old_balance, acc[sender_index].balance);
-    printf("Receiver (%s): $%.2f → $%.2f\n",receiver_acc, receiver_old_balance, acc[receiver_index].balance);
+    printf("Sender (%s): $%.2f $%.2f\n", sender_acc, sender_old_balance, acc[sender_index].balance);
+    printf("Receiver (%s): $%.2f  $%.2f\n", receiver_acc, receiver_old_balance, acc[receiver_index].balance);
     if (askToSave())
     {
         SAVE(acc, n);
@@ -1074,7 +1095,6 @@ void QUIT()
     printSuccess("GOODBYE!!\n");
     exit(0);
 }
-// ========== MENU FUNCTIONS ==========
 
 void print(accInfo accounts[], int n)
 {

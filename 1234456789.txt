@@ -1,3 +1,11 @@
 2025-12 transfer-in 300.00 Balance: 1500.50
 2025-12 deposit 100.00 Balance: 1600.50
 2025-12 withdraw 200.00 Balance: 1400.50
+2025-12 withdraw 900.90 Balance: 499.60
+2025-12 withdraw 900.89 Balance: 499.61
+2025-12 deposit 89.00 Balance: 588.61
+2025-12 withdraw 20.76 Balance: 567.85
+2025-12 withdraw 6.89 Balance: 560.96
+2025-12 deposit 9.00 Balance: 569.96
+2025-12 transfer-in 99.65 Balance: 667.50
+2025-12 transfer-in 88.76 Balance: 756.26

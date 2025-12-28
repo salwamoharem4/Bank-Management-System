@@ -5,5 +5,5 @@
 9700000009,jjjj,salwa.mohrem@gmail.com,250.00,09864444,5-2017,active
 1234567891,salwa,salwa.moharem@gmail.com,1234.00,012113421,12-2025,active
 1234567889,salwa,salwa@gmail.com,12.00,012345678,12-2025,active
-1234567876,salwa mohamed,salwa.moharem@gmail.cm,1200.00,01211985433,12-2025,active
-1234456789,hunia ibrahim,huniaibrahim@gmail.com,1400.50,01211985433,12-2025,active
+1234567876,salwa mohamed,salwa.moharem@gmail.cm,967.05,01211985433,12-2025,active
+1234456789,hunia ibrahim,huniaibrahim@gmail.com,756.26,01211985433,12-2025,active
